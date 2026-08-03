@@ -1,0 +1,27 @@
+name: CI
+
+on:
+  push:
+    branches: [ "main", "master" ]
+  pull_request:
+    branches: [ "main", "master" ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y g++
+
+      - name: Build unit tests
+        run: |
+          g++ unit_test/bokumeido_unit_test.cpp unit_test/another.cpp \
+              -I . -lpthread \
+              --std=c++11 -O3 -DNDEBUG \
+              -Wall -Wextra -Wno-unused \
+              -o bokumeido_unit_test
+
+      - name: Run unit tests
+        run: ./bokumeido_unit_test

@@ -1,0 +1,183 @@
+# clang-format 配置（按类别整理，注释为一行中文说明并包含可选值简述）
+# 说明：已保留原文件中被注释掉的选项（未取消注释），仅对可用选项补充或更新注释。
+
+################################
+# 基本与兼容性
+################################
+# 指定语言，常用 Cpp/Java/ObjC 等；这里设为 C++ 文件处理
+Language: Cpp
+
+# clang-format 基础风格，可用: LLVM, Google, Chromium, Microsoft, WebKit, Mozilla 等
+# BasedOnStyle: LLVM
+
+################################
+# 缩进设置
+################################
+# 缩进宽度，整数，表示每级缩进的空格数
+IndentWidth: 4
+# 延续行（换行后续行）的额外缩进宽度（整数）
+ContinuationIndentWidth: 4
+# 构造函数初始化列表的缩进宽度（整数）
+ConstructorInitializerIndentWidth: 4
+# 命名空间缩进：None（不缩进），Inner（仅嵌套缩进），All（全部缩进）
+NamespaceIndentation: Inner
+# case 标签缩进：true 表示缩进到 case 内部，false 表示与 switch 对齐
+IndentCaseLabels: false
+# 访问说明符偏移（整数，可为负，调整 public/private 缩进）
+AccessModifierOffset: -4
+# 使用空格或 Tab，选项：Never/ForIndentation/ForContinuationAndIndentation/Always
+UseTab: Never
+# Tab 宽度（整数）
+TabWidth: 4
+
+################################
+# 换行与大括号策略
+################################
+# 大括号前换行风格：Attach/Allman/Google/Stroustrup/GNU/WebKit/Custom 等
+BreakBeforeBraces: Custom
+# 在函数/模板/控制语句等后是否强制换行（布尔或按 BraceWrapping 指定），BreakBeforeBraces为Custom时生效
+# BraceWrapping 中的详细选项单独列出
+BraceWrapping:
+  # class定义后面
+  AfterClass: true
+  # 控制语句后面
+  AfterControlStatement: true
+  # enum定义后面
+  AfterEnum: true
+  # 函数定义后面
+  AfterFunction: true
+  # 命名空间定义后面
+  AfterNamespace: true
+  # struct定义后面
+  AfterStruct: true
+  # union定义后面
+  AfterUnion: true
+  # extern之后
+  AfterExternBlock: true
+  # catch之前
+  BeforeCatch: true
+  # else之前
+  BeforeElse: true
+  # 缩进大括号
+  IndentBraces: false
+  # 分离空函数
+  SplitEmptyFunction: false
+  # 分离空语句
+  SplitEmptyRecord: true
+  # 分离空命名空间
+  SplitEmptyNamespace: true
+
+# 在二元操作符前换行策略：None/NonAssignment/All
+BreakBeforeBinaryOperators: NonAssignment
+# 在三元运算符前换行（true/false）
+BreakBeforeTernaryOperators: false
+# 模板声明是否总是换行（true/false）
+AlwaysBreakTemplateDeclarations: true
+# 返回类型后是否总是换行：None/All/TopLevel/AllDefinitions/TopLevelDefinitions
+AlwaysBreakAfterReturnType: None
+# 构造函数初始化列表换行策略：BeforeColon/AfterColon/AfterComma
+BreakConstructorInitializers: AfterColon
+# 是否把短函数放在单行：None/InlineOnly/Empty/Inline/All
+AllowShortFunctionsOnASingleLine: Empty
+# 是否允许短 if 在一行（true/false）
+AllowShortIfStatementsOnASingleLine: true
+# 是否允许短循环在一行（true/false）
+AllowShortLoopsOnASingleLine: true
+# 是否允许短 case 标签在一行（true/false）
+AllowShortCaseLabelsOnASingleLine: true
+# 是否允许短代码块放在同一行（true/false）
+AllowShortBlocksOnASingleLine: true
+# 是否把多行字符串字面量前换行（true/false）
+AlwaysBreakBeforeMultilineStrings: false
+# 不允许将所有函数参数放在下一行时分散：true/false（BinPackParameters）
+BinPackParameters: true
+# 参数打包（函数调用）类似设置
+BinPackArguments: true
+
+################################
+# 空格与对齐策略
+################################
+# 指针与引用对齐方式：Left/Right/Middle
+PointerAlignment: Left
+# 在 C 风格转换后添加空格（true/false）
+SpaceAfterCStyleCast: false
+# 在 template 关键字后添加空格（true/false）
+SpaceAfterTemplateKeyword: true
+# 在赋值运算符之前加空格（true/false）
+SpaceBeforeAssignmentOperators: true
+# 开圆括号之前添加一个空格: Never, ControlStatements, Always
+SpaceBeforeParens: ControlStatements
+# 在空的圆括号中添加空格
+SpaceInEmptyParentheses: false
+# 在尖括号的<后和>前添加空格
+SpacesInAngles: false
+# 在容器(ObjC和JavaScript的数组和字典等)字面量中添加空格
+SpacesInContainerLiterals: true
+# 在圆括号的(后和)前添加空格
+SpacesInParentheses: false
+# 在方括号的[后和]前添加空格，lamda表达式和未指明大小的数组的声明不受影响
+SpacesInSquareBrackets: false
+# 在C风格类型转换的括号中添加空格
+SpacesInCStyleCastParentheses: false
+# 在尾随的注释前添加的空格数(只适用于//)
+SpacesBeforeTrailingComments: 4
+# 在 C++11 的花括号初始化列表（如 T{...}）的 '{' 前是否加入空格；可选 true/false
+SpaceBeforeCpp11BracedList: false   
+# 在构造函数初始化列表的 ':' 前是否加入空格（如 My():a(0)）；可选 true/false
+SpaceBeforeCtorInitializerColon: true   
+# 在继承声明的 ':' 前是否加入空格（如 class A : B）；可选 true/false
+SpaceBeforeInheritanceColon: true   
+
+################################
+# 注释相关
+################################
+# 是否允许 clang-format 对注释做重排（true/false）
+ReflowComments: false
+# 是否对命名空间结尾处的注释进行修正或添加（true/false）
+FixNamespaceComments: true
+# 对齐尾随注释（//）到列（true/false）
+AlignTrailingComments: true
+# 对齐以反斜杠续行的反斜杠位置：Left/Right
+AlignEscapedNewlines: Left
+# 是否对操作数进行列对齐（true/false）
+AlignOperands: true
+
+################################
+# 预处理与宏相关
+################################
+# 预处理指令缩进：None/AfterHash/BeforeHash
+IndentPPDirectives: None
+# 是否允许在同一行写多个短循环，短注释等（已在上方相关设置体现）
+# 对宏续行保留换行请确保 AlignEscapedNewlines 和 ReflowComments 设置合理
+
+################################
+# 包含与排序相关
+################################
+# 是否排序并重组 #include（true/false）
+SortIncludes: false
+# 是否允许排序 using 声明（true/false）
+SortUsingDeclarations: false
+# 保持 include 分组方式：Preserve/Regroup/...
+IncludeBlocks: Preserve
+
+################################
+# 列宽与空行
+################################
+# 每行字符限制，0 表示禁用自动换行
+ColumnLimit: 0
+# 最大连续空行保留数（整数）
+MaxEmptyLinesToKeep: 10
+# 保留块开始处的空行（true/false）
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+################################
+# 其他细节设置
+################################
+# 是否从类型推导指针对齐（false/true）
+DerivePointerAlignment: false
+# 在 C++11 花括号列表风格中是否去除多余空格（true/false）
+Cpp11BracedListStyle: true
+# 构造函数初始化要么全部一行要么每个单独一行（true/false）
+ConstructorInitializerAllOnOneLineOrOnePerLine: false
+# 是否在换行的函数名处缩进函数名（true/false）
+IndentWrappedFunctionNames: false

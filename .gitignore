@@ -1,0 +1,51 @@
+﻿# ---- GitHub 内部配置（仅保留 CI workflow） ----
+.github/*
+!.github/workflows/
+
+# ---- 第三方依赖 ----
+vendor/*
+
+# ---- 本地 MCP 服务 ----
+mcp-servers/*
+
+# ---- 编辑器 / 本地工具 ----
+.vscode/*
+.agent-knowledge/*
+
+# ---- 本地对比测试（不参与版本控制） ----
+benchmark_cmp/*
+
+# ---- 本地编译命令记录 ----
+unit_test/gcc_cmd.txt
+
+# ---- 编译产物 ----
+# Windows (MSVC)：可执行文件与中间文件
+*.exe
+*.obj
+*.lib
+*.pdb
+*.ilk
+*.idb
+*.exp
+
+# Linux/macOS：带后缀的产物
+*.o
+*.a
+*.so
+*.dll
+a.out
+
+# Linux：无后缀产物
+/unit_test/bokumeido_unit_test
+/unit_test/bokumeido_unit_test_clang
+/unit_test/bokumeido_unit_test_cross
+/benchmark/bokumeido_benchmark
+
+# ---- 运行 / 打包产生的临时文件 ----
+*.log
+*.zip
+*.bundle
+
+# ---- 系统垃圾文件 ----
+.DS_Store
+Thumbs.db
