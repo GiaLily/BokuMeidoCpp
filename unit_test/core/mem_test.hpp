@@ -32,6 +32,17 @@ private:
     std::string b_;
 };
 
+/* 构造会抛异常的类型：验证 construct 静默失败并归还槽位 */
+class ThrowingConstructible
+{
+public:
+    explicit ThrowingConstructible(bool throw_flag)
+    {
+        if (throw_flag)
+            throw 42;    // 抛任意值，验证异常被 construct 静默吞掉
+    }
+};
+
 // ========== 测试函数 ==========
 
 /* 默认构造和容量查询 */
@@ -105,6 +116,32 @@ inline void PoolExhaustionTest()
     MEIDO_ASSERT(pool.destroy(d) == 0);
 }
 
+/* construct 构造失败：异常被静默吞掉，返回 nullptr 且槽位归还 */
+inline void ConstructThrowsTest()
+{
+    mem::ObjectPool<ThrowingConstructible> pool(2);
+
+    // 第一个构造成功
+    ThrowingConstructible* ok = pool.construct(false);
+    MEIDO_ASSERT(ok != nullptr);
+    MEIDO_ASSERT(pool.available() == 1);
+
+    // 构造抛异常：静默返回 nullptr，槽位归还（若异常未被吞掉，此处测试直接崩溃）
+    ThrowingConstructible* failed = pool.construct(true);
+    MEIDO_ASSERT(failed == nullptr);
+    MEIDO_ASSERT(pool.available() == 1);    // 槽位已归还
+
+    // 异常不影响后续使用：继续正常构造
+    ThrowingConstructible* ok2 = pool.construct(false);
+    MEIDO_ASSERT(ok2 != nullptr);
+    MEIDO_ASSERT(pool.available() == 0);
+
+    // 清理
+    MEIDO_ASSERT(pool.destroy(ok) == 0);
+    MEIDO_ASSERT(pool.destroy(ok2) == 0);
+    MEIDO_ASSERT(pool.available() == 2);
+}
+
 /* 非默认可构造类型 */
 inline void NonDefaultConstructibleTest()
 {
@@ -146,6 +183,7 @@ inline void check()
     ConstructionTest();
     ConstructDestroyTest();
     PoolExhaustionTest();
+    ConstructThrowsTest();
     NonDefaultConstructibleTest();
     DestroyNullptrTest();
     DestroyWrongPointerTest();

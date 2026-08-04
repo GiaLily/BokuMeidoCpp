@@ -34,6 +34,7 @@ namespace mem
         /*  从池中获取一个槽位并在其上构造对象
             - SFINAE：Args... 必须能构造 T
             - 池满时返回 nullptr
+            - T 构造失败（抛出异常）时，异常被静默吞掉并返回 nullptr
             @param args: 转发给 T 的构造参数
             @return T* 或 nullptr  */
         template <class... Args, typename std::enable_if<std::is_constructible<T, Args...>::value, int>::type = 0>
@@ -104,14 +105,28 @@ namespace mem
     template <class... Args, typename std::enable_if<std::is_constructible<T, Args...>::value, int>::type>
     inline T* ObjectPool<T>::construct(Args&&... args)
     {
-        std::lock_guard<std::mutex> lk(mtx_);
-        if (free_list_.empty())
+        size_t idx;
         {
+            std::lock_guard<std::mutex> lk(mtx_);
+            if (free_list_.empty())
+            {
+                return nullptr;
+            }
+            idx = free_list_.back();
+            free_list_.pop_back();
+        }
+        // 锁外构造：避免 T 的构造函数拉长临界区，与 destroy 的锁外析构对齐
+        try
+        {
+            return new (&slots_[idx].storage) T(std::forward<Args>(args)...);
+        }
+        catch (...)
+        {
+            // 库不抛异常：静默吞掉并归还槽位（free_list_ 容量已 reserve，push_back 不会分配内存）
+            std::lock_guard<std::mutex> lk(mtx_);
+            free_list_.push_back(idx);
             return nullptr;
         }
-        size_t idx = free_list_.back();
-        free_list_.pop_back();
-        return new (&slots_[idx].storage) T(std::forward<Args>(args)...);
     }
 
     template <class T>

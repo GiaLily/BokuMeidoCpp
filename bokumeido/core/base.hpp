@@ -50,8 +50,8 @@
 
 #define BOKUMEIDOCPP_MAJOR "1"                                                                                                     // 主版本号，对应不向下兼容的API或文件改动
 #define BOKUMEIDOCPP_MINOR "0"                                                                                                     // 次版本号，对应不影响现有API使用的新功能增加
-#define BOKUMEIDOCPP_PATCH "0"                                                                                                     // 修订版本号，对应不改变API的BUG修复或效能优化
-#define BOKUMEIDOCPP_DATE "20260803"                                                                                         // 日期版本号，对应文档和注释级别的改动和测试阶段
+#define BOKUMEIDOCPP_PATCH "1"                                                                                                     // 修订版本号，对应不改变API的BUG修复或效能优化
+#define BOKUMEIDOCPP_DATE "dev"                                                                                     // 日期版本号，对应文档和注释级别的改动和测试阶段
 #define BOKUMEIDOCPP_VERSION BOKUMEIDOCPP_MAJOR "." BOKUMEIDOCPP_MINOR "." BOKUMEIDOCPP_PATCH "-" BOKUMEIDOCPP_DATE    // 完整版本字符串
 
 
