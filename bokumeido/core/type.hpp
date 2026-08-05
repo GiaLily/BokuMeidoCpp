@@ -578,6 +578,8 @@ namespace _priv
     constexpr bool _priv::CircularQueueElemChecker<T>::value;
 
 
+    template <class T>
+    using NonBoolIntChecker = std::integral_constant<bool, std::is_integral<T>::value && !std::is_same<typename std::remove_cv<T>::type, bool>::value>;
 
 }    // namespace _priv
 

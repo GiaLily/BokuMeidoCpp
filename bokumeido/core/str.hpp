@@ -217,23 +217,32 @@ namespace _priv
     template <class T, int n>
     void osInput(AutoOStream& aos, const T (&arr)[n]);
 
+    // 判断一个类型是否为普通函数或成员函数
+    template <class T>
+    using IsFuncOrMemFuncChecker = std::integral_constant<bool, std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value>;
+
+    // 判断一个指针是否属于char指针(char*、const char*、volatile char*、 const volatile char*及有无符号形式)
+    template <class T>
+    using PointerBelongToCharChecker = std::integral_constant<bool, type::InTypesChecker<typename std::remove_cv<typename std::remove_pointer<T>::type>::type, char, signed char, unsigned char>::value>;
+
+
     // 添加对函数指针类型的处理
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && (std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value), int>::type = 0>
+    template <class T, typename std::enable_if<IsFuncOrMemFuncChecker<T>::value, int>::type = 0>
     void osInput(AutoOStream& aos, const T& arg);
 
     // 添加对指针类型的处理
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !(std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value) && std::is_pointer<T>::value && type::InTypesChecker<typename std::remove_cv<typename std::remove_pointer<T>::type>::type, char, signed char, unsigned char>::value, int>::type = 0>
+    template <class T, typename std::enable_if<!IsFuncOrMemFuncChecker<T>::value && std::is_pointer<T>::value && PointerBelongToCharChecker<T>::value, int>::type = 0>
     void osInput(AutoOStream& aos, const T& arg);
 
     // 添加对字符串指针类型的处理
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !(std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value) && std::is_pointer<T>::value && !type::InTypesChecker<typename std::remove_cv<typename std::remove_pointer<T>::type>::type, char, signed char, unsigned char>::value, int>::type = 0>
+    template <class T, typename std::enable_if<!IsFuncOrMemFuncChecker<T>::value && std::is_pointer<T>::value && !PointerBelongToCharChecker<T>::value, int>::type = 0>
     void osInput(AutoOStream& aos, const T& arg);
 
     // 添加对bool类型的处理
     void osInput(AutoOStream& aos, bool arg);
 
     // 添加对整数类型的处理
-    template <class T, typename std::enable_if<std::is_integral<T>::value && !std::is_same<typename std::remove_cv<T>::type, bool>::value, int>::type = 0>
+    template <class T, typename std::enable_if<_priv::NonBoolIntChecker<T>::value, int>::type = 0>
     void osInput(AutoOStream& aos, const T& arg);
 
     // 添加对浮点类型的处理
@@ -241,7 +250,7 @@ namespace _priv
     void osInput(AutoOStream& aos, const T& arg);
 
     // 添加对其他支持operator<<的类型的处理
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !(std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value) && !std::is_pointer<T>::value && !std::is_arithmetic<T>::value, int>::type = 0>
+    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !IsFuncOrMemFuncChecker<T>::value && !std::is_pointer<T>::value && !std::is_arithmetic<T>::value, int>::type = 0>
     void osInput(AutoOStream& aos, const T& arg);
 
     // 添加对不支持operator<<的类型的处理
@@ -312,7 +321,7 @@ namespace _priv
         aos.put('}');
     }
 
-    
+
     template <size_t idx, class... Ts>
     inline void osInputTuple(AutoOStream& aos, const std::tuple<Ts...>&, std::false_type)
     {
@@ -430,7 +439,7 @@ namespace _priv
     }
 
     // 添加对函数及函数指针的支持
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && (std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value), int>::type>
+    template <class T, typename std::enable_if<IsFuncOrMemFuncChecker<T>::value, int>::type>
     inline void osInput(AutoOStream& aos, const T& arg)
     {
         const std::string& type_name = type::getTypeName<T>();
@@ -438,14 +447,14 @@ namespace _priv
     }
 
     // 添加对char指针的支持
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !(std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value) && std::is_pointer<T>::value && type::InTypesChecker<typename std::remove_cv<typename std::remove_pointer<T>::type>::type, char, signed char, unsigned char>::value, int>::type>
+    template <class T, typename std::enable_if<!IsFuncOrMemFuncChecker<T>::value && std::is_pointer<T>::value && PointerBelongToCharChecker<T>::value, int>::type>
     inline void osInput(AutoOStream& aos, const T& arg)
     {
         if (!arg)
             aos.write("nullptr", 7);
         else if (type::InTypesChecker<typename std::remove_const<typename std::remove_pointer<T>::type>::type, char, signed char, unsigned char>::value)
             aos.write((const char*)arg, strlen((const char*)arg));    // 普通字符串
-        else    // volatile char*就一个字符一个字符地传入
+        else                                                          // volatile char*就一个字符一个字符地传入
         {
             for (int i = 0; arg[i] != '\0'; i++)
             {
@@ -455,7 +464,7 @@ namespace _priv
     }
 
     // 添加对其他指针的支持
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !(std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value) && std::is_pointer<T>::value && !type::InTypesChecker<typename std::remove_cv<typename std::remove_pointer<T>::type>::type, char, signed char, unsigned char>::value, int>::type>
+    template <class T, typename std::enable_if<!IsFuncOrMemFuncChecker<T>::value && std::is_pointer<T>::value && !PointerBelongToCharChecker<T>::value, int>::type>
     inline void osInput(AutoOStream& aos, const T& arg)
     {
         aos << std::showbase << std::hex << uintptr_t(arg) << std::dec;
@@ -494,7 +503,7 @@ namespace _priv
         aos.put(arg ? '1' : '0');
     }
 
-    template <class T, typename std::enable_if<std::is_integral<T>::value && !std::is_same<typename std::remove_cv<T>::type, bool>::value, int>::type>
+    template <class T, typename std::enable_if<_priv::NonBoolIntChecker<T>::value, int>::type>
     inline void osInput(AutoOStream& aos, const T& arg)
     {
         if (type::InTypesChecker<T, char, signed char, unsigned char, volatile char, volatile signed char, volatile unsigned char>::value)
@@ -591,7 +600,7 @@ namespace _priv
     }
 
     // 添加对其他支持operator<<的类型的支持
-    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !(std::is_function<typename std::remove_pointer<const T>::type>::value || std::is_member_function_pointer<const T>::value) && !std::is_pointer<T>::value && !std::is_arithmetic<T>::value, int>::type>
+    template <class T, typename std::enable_if<type::StdCoutEachChecker<const T>::value && !IsFuncOrMemFuncChecker<T>::value && !std::is_pointer<T>::value && !std::is_arithmetic<T>::value, int>::type>
     inline void osInput(AutoOStream& aos, const T& arg)
     {
         aos << arg;
