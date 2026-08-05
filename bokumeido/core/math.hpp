@@ -24,7 +24,7 @@ namespace meido
 namespace math
 {
     // 避免整型溢出的安全绝对值函数，可接受bool外的整型输入
-    template <class T, typename std::enable_if<std::is_integral<T>::value && !std::is_same<typename std::remove_cv<T>::type, bool>::value, int>::type = 0>
+    template <class T, typename std::enable_if<_priv::NonBoolIntChecker<T>::value, int>::type = 0>
     constexpr typename std::make_unsigned<T>::type safeAbs(T x);
 
 
@@ -136,7 +136,7 @@ namespace math
 
 namespace math
 {
-    template <class T, typename std::enable_if<std::is_integral<T>::value && !std::is_same<typename std::remove_cv<T>::type, bool>::value, int>::type>
+    template <class T, typename std::enable_if<_priv::NonBoolIntChecker<T>::value, int>::type>
     inline constexpr typename std::make_unsigned<T>::type safeAbs(T x)
     {
         return _priv::safeAbs(x);
