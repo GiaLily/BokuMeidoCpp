@@ -1,0 +1,4 @@
+# 统一行尾策略：文本文件提交入库时一律规范化为 LF
+* text=auto
+# Windows 批处理脚本必须 CRLF，否则 cmd.exe 无法正确解析（LF 会导致运行出错）
+*.bat text eol=crlf
