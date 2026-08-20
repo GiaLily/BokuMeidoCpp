@@ -174,6 +174,36 @@ namespace _priv
         std::ostream* os_;
     };
 
+    // 基于std::string的连续输出缓冲区：写入的数据直接append进string
+    // TODO: 考虑是否支持外部给定string引用作为buf，实现formatTo之类的功能
+    class StringOutBuf : public std::streambuf
+    {
+    public:
+        std::string& str() { return str_; }
+        const std::string& str() const { return str_; }
+
+        // 清空内容但保留容量，配合thread_local复用避免重复分配
+        void clear() { str_.clear(); }
+
+    protected:
+        virtual int_type overflow(int_type c) override
+        {
+            if (traits_type::eq_int_type(c, traits_type::eof()))
+                return traits_type::not_eof(c);    // eof 视为刷新请求，不写入字符
+            str_.push_back(traits_type::to_char_type(c));
+            return c;
+        }
+
+        virtual std::streamsize xsputn(const char* s, std::streamsize n) override
+        {
+            str_.append(s, static_cast<size_t>(n));
+            return n;
+        }
+
+    private:
+        std::string str_;
+    };
+
     // 添加对initializer_list类型的处理
     template <class T>
     void osInput(AutoOStream& aos, std::initializer_list<T> arg);
@@ -654,6 +684,7 @@ namespace _priv
             return std::string(buf, len);
         std::ostringstream& oss = _priv::getToStrOss();
         oss.str(std::string());
+        oss.clear();    // 复位状态位，避免异常残留的 badbit 导致后续输出静默丢失
         if (fp >= 0)
             oss << std::fixed << std::setprecision(fp);
         else
@@ -670,6 +701,7 @@ namespace _priv
 
         _priv::AutoOStream aos(&oss);
         oss.str(std::string());
+        oss.clear();    // 复位状态位，避免异常残留的 badbit 导致后续输出静默丢失
         _priv::osInput(aos, arg);
         aos.flush();
         return oss.str();
@@ -722,6 +754,7 @@ namespace _priv
         std::ostringstream& oss = _priv::getFormatOss();
         size_t len = strlen(f_string);
         oss.str(std::string());
+        oss.clear();    // 复位状态位，避免异常残留的 badbit 导致后续输出静默丢失
 
         AutoOStream aos(&oss);
         _priv::formatAll(aos, f_string, len, args...);

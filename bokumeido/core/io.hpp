@@ -30,13 +30,12 @@ namespace meido
 namespace io
 {
     /*  实现类似Python的print打印功能，基于std::cout
-        - 基于std::ostringstream实现，可以接收任意数量和类型的参数
+        - 可以接收任意数量和类型的参数，组合后通过cout一次性写入，不会被其他线程cout交错
         - 支持重载了std::ostream& operator<<(std::ostream&, const T&)的T对象，operator<<中不可再调用此print
         - 扩展了对非volatile限定的STL可遍历容器对象的支持
         - 有无符号的char都会被当作字符处理
         - 宽字符会被当作数字处理，wstring会被当作装有宽字符的容器（{65, 66, ...}）
-        - 未支持的类型会被转换为<ClassName: Address>形式的字符串
-        - 在不混用print函数和std::cout时，线程安全  */
+        - 未支持的类型会被转换为<ClassName: Address>形式的字符串 */
     template <class T, class... Args>
     void print(const T& arg, const Args&... args);
 
@@ -210,11 +209,18 @@ namespace io
 
 namespace _priv
 {
-    _MEIDO_EXPORT inline std::mutex& immutableGetPrintlock()
+    inline _priv::StringOutBuf& getPrintSbuf()
     {
-        static std::mutex lk;
-        return lk;
+        thread_local _priv::StringOutBuf sbuf;
+        return sbuf;
     }
+
+    inline std::ostream& getPrintOStream()
+    {
+        thread_local std::ostream os(&getPrintSbuf());
+        return os;
+    }
+
 }    // namespace _priv
 
 
@@ -226,16 +232,22 @@ namespace io
     inline void print(const T& arg, const Args&... args)
     {
         _priv::osInputFloatPrecision() = -1;
-        _priv::AutoOStream aos(&std::cout);
-        {
-            std::lock_guard<std::mutex> lk(_priv::immutableGetPrintlock());
-            _priv::osInput(aos, arg);
-            int tmp[] = {0, (aos.write(" ", 1), _priv::osInput(aos, args), 0)...};
-            (void)tmp;
-        }
+        _priv::StringOutBuf& sbuf = _priv::getPrintSbuf();
+        sbuf.clear();
+        std::ostream& os = _priv::getPrintOStream();
+        os.clear();    // 复位状态位，避免异常残留的 badbit 导致后续输出静默丢失
+        _priv::AutoOStream aos(&os);
+        
+        _priv::osInput(aos, arg);
+        int tmp[] = {0, (aos.put(' '), _priv::osInput(aos, args), 0)...};
+        (void)tmp;
+        aos.put('\n');
         aos.flush();
-        std::cout << std::endl;
-    }
+
+        const std::string& s = sbuf.str();
+        std::cout.write(s.data(), static_cast<std::streamsize>(s.size()));
+        std::cout.flush();
+     }
 
 
     inline ArgumentParser::ArgumentParser()
