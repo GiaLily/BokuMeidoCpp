@@ -273,6 +273,14 @@ namespace log
 
 namespace _priv
 {
+    // 用于跨dll边界调试，多个dll共用一份flag
+    template <size_t n>
+    _MEIDO_EXPORT inline std::atomic<int32_t>& immutableGetSharedFlag()
+    {
+        static std::atomic<int32_t> flag{0};
+        return flag;
+    }
+
     // 整型的绝对值函数，避免负数转换为无符号数时的溢出
     template <class T>
     inline constexpr typename std::make_unsigned<T>::type safeAbs(T x)
