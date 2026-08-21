@@ -34,7 +34,7 @@ BokuMeidoCpp is a lightweight C++ utility library built on the standard library.
 
 **How BokuMeidoCpp solves them**
 - `format`, `toStr`, `print`: support any standard-library iterable container (including nested ones). Adapt custom types with a simple `operator<<`; unadapted types produce `<ClassName: Address>` instead of a compile error
-- Logger: sync/async output to console or file, with a callback mode to forward all library logs to any target
+- Logger: sync/async output to console or file, with a **callback mode** — a single line `setupSyncLogger(level, callback)` bridges all library log messages to any third-party logger such as spdlog, without touching business code
 - Thread pool, object pool, `main()` argument parser, time utilities — clean interfaces that you'll understand at first glance
 - Path utilities: cross-platform `join`, `exists`, etc., avoiding platform-specific APIs
 - Template type checking: compile errors appear at the call site, not buried deep inside template bodies
@@ -261,8 +261,7 @@ void print_example() {
     meido::io::print(42, 3.14, "hello", vec, mp);
     // Output: 42 3.14 hello {1, 2, 3} {1:a, 2:b}
     // Unsupported types (no operator<<): <ClassName: 0x7fff...>
-    // Thread-safety: each print call is internally locked — concurrent calls never race;
-    // output from different threads may interleave between calls (same as mixing std::cout), which is normal
+    // Thread-safety
 }
 ```
 
@@ -289,6 +288,8 @@ meido::log::setupSyncLogger(meido::log::Level::INFO, [](meido::log::Message msg)
 });
 MEIDO_INFO("this will be forwarded");  // goes to callback, not to file
 ```
+
+**The value of callback mode**: when your project already has a logging system (such as spdlog, glog, or a unified remote logging/reporting service), you don't need to abandon it or rewrite every `MEIDO_*` call — just provide a callback at startup, and all library logs (including the library's own internal logs) automatically flow into your logging system, giving you unified collection, unified formatting, and unified output.
 
 ### `str.hpp` — String conversion and formatting
 
@@ -391,7 +392,7 @@ void func(T val) {
 | Item | Info |
 |:-----|:------|
 | **Version** | `1.0.0` |
-| **Last Updated** | `2026-08-03` |
+| **Last Updated** | `2026-08-21` |
 
 ---
 
@@ -415,10 +416,15 @@ void func(T val) {
 
 ## Changelog
 
+### v1.0.1
+*2026-08-21*
+1. Optimized `print` performance using `thread_local` + a custom buffer, eliminating the risk of interleaving with `cout`'s buffer;
+2. Refined implementation details of `toStr`, `format`, and `ObjectPool`;
+3. Added an internal cross-DLL flag read/write interface for debugging;
+4. Other non-code miscellaneous optimizations.
+
 ### v1.0.0
-
 *2026-08-03*
-
 1. Redesigned based on mineutils with standardized interfaces, new feature modules, and performance optimizations;
 2. Added unit tests and performance benchmarks.
 
