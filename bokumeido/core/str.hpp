@@ -470,7 +470,7 @@ namespace _priv
 
     // 添加对函数及函数指针的支持
     template <class T, typename std::enable_if<IsFuncOrMemFuncChecker<T>::value, int>::type>
-    inline void osInput(AutoOStream& aos, const T& arg)
+    inline void osInput(AutoOStream& aos, const T&)
     {
         const std::string& type_name = type::getTypeName<T>();
         aos.write(type_name.c_str(), type_name.size());

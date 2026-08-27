@@ -269,7 +269,7 @@ namespace _priv
     }
 
     template <class T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
-    inline T safeAdd(T a, T b, const char* func_name)
+    inline T safeAdd(T a, T b, const char*)
     {
         return a + b;
     }
@@ -291,7 +291,7 @@ namespace _priv
     }
 
     template <class T, typename std::enable_if<std::is_floating_point<T>::value, int>::type = 0>
-    inline T safeSub(T a, T b, const char* func_name)
+    inline T safeSub(T a, T b, const char*)
     {
         return a - b;    // 不会溢出
     }
