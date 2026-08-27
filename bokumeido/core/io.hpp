@@ -237,7 +237,7 @@ namespace io
         std::ostream& os = _priv::getPrintOStream();
         os.clear();    // 复位状态位，避免异常残留的 badbit 导致后续输出静默丢失
         _priv::AutoOStream aos(&os);
-        
+
         _priv::osInput(aos, arg);
         int tmp[] = {0, (aos.put(' '), _priv::osInput(aos, args), 0)...};
         (void)tmp;
@@ -247,7 +247,7 @@ namespace io
         const std::string& s = sbuf.str();
         std::cout.write(s.data(), static_cast<std::streamsize>(s.size()));
         std::cout.flush();
-     }
+    }
 
 
     inline ArgumentParser::ArgumentParser()

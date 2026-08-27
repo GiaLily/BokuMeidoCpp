@@ -431,7 +431,7 @@ namespace thrd
         if (future_state_.valid())
             future_state_.wait();
         // else
-            // MEIDO_WARN("Task is invalid, so the function returns directly");
+        // MEIDO_WARN("Task is invalid, so the function returns directly");
     }
 
     template <class Ret>
