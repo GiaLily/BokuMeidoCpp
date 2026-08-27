@@ -48,10 +48,10 @@
 #endif
 
 
-#define BOKUMEIDOCPP_MAJOR "1"                                                                                                     // 主版本号，对应不向下兼容的API或文件改动
-#define BOKUMEIDOCPP_MINOR "0"                                                                                                     // 次版本号，对应不影响现有API使用的新功能增加
-#define BOKUMEIDOCPP_PATCH "1"                                                                                                     // 修订版本号，对应不改变API的BUG修复或效能优化
-#define BOKUMEIDOCPP_DATE "20260821"                                                                                     // 日期版本号，对应文档和注释级别的改动和测试阶段
+#define BOKUMEIDOCPP_MAJOR "1"                                                                                                                 // 主版本号，对应不向下兼容的API或文件改动
+#define BOKUMEIDOCPP_MINOR "0"                                                                                                                 // 次版本号，对应不影响现有API使用的新功能增加
+#define BOKUMEIDOCPP_PATCH "1"                                                                                                                 // 修订版本号，对应不改变API的BUG修复或效能优化
+#define BOKUMEIDOCPP_DATE "dev"                                                                                                                // 日期版本号，对应文档和注释级别的改动和测试阶段
 #define BOKUMEIDOCPP_VERSION BOKUMEIDOCPP_MAJOR "." BOKUMEIDOCPP_MINOR "." BOKUMEIDOCPP_PATCH "-" BOKUMEIDOCPP_DATE    // 完整版本字符串
 
 
@@ -192,47 +192,47 @@ namespace base
 
 
 
-#define _MEIDO_INFO(fmt_chars)                                                       \
-    do                                                                               \
-    {                                                                                \
+#define _MEIDO_INFO(fmt_chars)                                                           \
+    do                                                                                   \
+    {                                                                                    \
         auto _bokumeido_now = std::chrono::system_clock::now();                          \
-        meido::_priv::g_base_logger->log(log::Level::INFO, false,                    \
+        meido::_priv::g_base_logger->log(log::Level::INFO, false,                        \
                                          __FILE__, __LINE__, _bokumeido_now, fmt_chars); \
     } while (0)
-#define _MEIDO_WARN(fmt_chars)                                                       \
-    do                                                                               \
-    {                                                                                \
+#define _MEIDO_WARN(fmt_chars)                                                           \
+    do                                                                                   \
+    {                                                                                    \
         auto _bokumeido_now = std::chrono::system_clock::now();                          \
-        meido::_priv::g_base_logger->log(log::Level::WARN, false,                    \
+        meido::_priv::g_base_logger->log(log::Level::WARN, false,                        \
                                          __FILE__, __LINE__, _bokumeido_now, fmt_chars); \
     } while (0)
-#define _MEIDO_ERROR(fmt_chars)                                                      \
-    do                                                                               \
-    {                                                                                \
+#define _MEIDO_ERROR(fmt_chars)                                                          \
+    do                                                                                   \
+    {                                                                                    \
         auto _bokumeido_now = std::chrono::system_clock::now();                          \
-        meido::_priv::g_base_logger->log(log::Level::ERROR, false,                   \
+        meido::_priv::g_base_logger->log(log::Level::ERROR, false,                       \
                                          __FILE__, __LINE__, _bokumeido_now, fmt_chars); \
     } while (0)
 
-#define _MEIDO_INFO_RAW(fmt_chars)                                                   \
-    do                                                                               \
-    {                                                                                \
+#define _MEIDO_INFO_RAW(fmt_chars)                                                       \
+    do                                                                                   \
+    {                                                                                    \
         auto _bokumeido_now = std::chrono::system_clock::now();                          \
-        meido::_priv::g_base_logger->log(log::Level::INFO, true,                     \
+        meido::_priv::g_base_logger->log(log::Level::INFO, true,                         \
                                          __FILE__, __LINE__, _bokumeido_now, fmt_chars); \
     } while (0)
-#define _MEIDO_WARN_RAW(fmt_chars)                                                   \
-    do                                                                               \
-    {                                                                                \
+#define _MEIDO_WARN_RAW(fmt_chars)                                                       \
+    do                                                                                   \
+    {                                                                                    \
         auto _bokumeido_now = std::chrono::system_clock::now();                          \
-        meido::_priv::g_base_logger->log(log::Level::WARN, true,                     \
+        meido::_priv::g_base_logger->log(log::Level::WARN, true,                         \
                                          __FILE__, __LINE__, _bokumeido_now, fmt_chars); \
     } while (0)
-#define _MEIDO_ERROR_RAW(fmt_chars)                                                  \
-    do                                                                               \
-    {                                                                                \
+#define _MEIDO_ERROR_RAW(fmt_chars)                                                      \
+    do                                                                                   \
+    {                                                                                    \
         auto _bokumeido_now = std::chrono::system_clock::now();                          \
-        meido::_priv::g_base_logger->log(log::Level::ERROR, true,                    \
+        meido::_priv::g_base_logger->log(log::Level::ERROR, true,                        \
                                          __FILE__, __LINE__, _bokumeido_now, fmt_chars); \
     } while (0)
 
@@ -964,17 +964,17 @@ namespace _priv
         return buf;
     }
 
-    constexpr size_t g_log_size = 1024;  // 控制一行日志的最大字节数，超过部分截断
+    constexpr size_t g_log_size = 1024;    // 控制一行日志的最大字节数，超过部分截断
 
-    inline void printfLog(const log::Message& log_msg)
+    inline void printfLog(log::Message log_msg)
     {
         FILE* target = stdout;
         if (log_msg.level >= log::Level::WARN)
             target = stderr;
         if (log_msg.is_raw)
         {
+            log_msg.msg.append("\n");
             fwrite(log_msg.msg.data(), 1, log_msg.msg.size(), target);
-            fputc('\n', target);
         }
         else
         {
@@ -1273,7 +1273,7 @@ namespace _priv
                 printf("[WARN][%s:%d] Logger has been initialized, ignore initConsole call\n", __FILE__, __LINE__);
                 return 1;
             }
-            if (!this->checkValid(min_level, "NOOP", "NOOP", log::RotationPolicy{}, 1024, [](log::Message msg) {}))
+            if (!this->checkValid(min_level, "NOOP", "NOOP", log::RotationPolicy{}, 1024, [](log::Message) {}))
                 return -1;
             min_level_ = min_level;
             logger_mode_.store(LoggerMode::DEFAULT, std::memory_order_release);    // 保证min_level_在其他线程可见
@@ -1290,7 +1290,7 @@ namespace _priv
                 return 1;
             }
 
-            if (!this->checkValid(min_level, log_dir, name_prefix, rotation_policy, 1024, [](log::Message msg) {}))
+            if (!this->checkValid(min_level, log_dir, name_prefix, rotation_policy, 1024, [](log::Message) {}))
                 return -1;
             log_dir = _priv::normPath(std::move(log_dir));
             log_dir.append("/");
@@ -1332,7 +1332,7 @@ namespace _priv
                 printf("[WARN][%s:%d] Logger has been initialized, ignore initSync call\n", __FILE__, __LINE__);
                 return 1;
             }
-            if (!this->checkValid(min_level, log_dir, name_prefix, rotation_policy, capacity, [](log::Message msg) {}))
+            if (!this->checkValid(min_level, log_dir, name_prefix, rotation_policy, capacity, [](log::Message) {}))
                 return -1;
             log_dir = _priv::normPath(std::move(log_dir));
             log_dir.append("/");
@@ -1517,6 +1517,52 @@ namespace _priv
     static volatile const char* g_keep_verstr = _priv::keepVersionString();
 
 
+    // 从函数名起点向前扫描限定名（ns::Class::…），跳过模板参数列表 <…> 与圆括号 (…)
+    //（外层函数参数表/局部类，如 foo(int,int)::(anonymous class)::operator()）的干扰：
+    // 在两类括号配对之外遇到第一个空格即认为限定名结束（该空格是返回类型与名字之间的分隔）：
+    // 返回该空格之后的位置；名字之前没有空格时返回 0。
+    // 注意返回的位置可能仍落在 '&' '*' '(' '[' 等返回类型符号上，由调用方继续跳过；
+    // 未配对的孤立 '('（如返回类型符号 (&）在其前破坏配对，属名字内部，扫描在此戛然而止。
+    inline size_t skipQualifiedNamePrefix(const std::string& s_func_sig, size_t name_pos)
+    {
+        size_t pos = name_pos;
+        int bracket_depth = 0;    // 模板参数列表 <…> 深度
+        int paren_depth = 0;      // 圆括号 (…) 深度
+        while (pos > 0)
+        {
+            const char ch = s_func_sig[pos - 1];
+            if (ch == '>')
+            {
+                ++bracket_depth;
+                --pos;
+            }
+            else if (ch == '<')
+            {
+                if (bracket_depth == 0)
+                    break;    // 孤立的 '<'（如 operator<），属于名字内部，之前的不是限定名
+                --bracket_depth;
+                --pos;
+            }
+            else if (ch == ')')
+            {
+                ++paren_depth;
+                --pos;
+            }
+            else if (ch == '(')
+            {
+                if (paren_depth == 0)
+                    break;    // 孤立的 '('（如返回类型符号 (&），由调用方跳过
+                --paren_depth;
+                --pos;
+            }
+            else if (bracket_depth == 0 && paren_depth == 0 && ch == ' ')
+                return pos;    // 括号配对之外的空格：限定名结束，返回空格之后的位置
+            else
+                --pos;
+        }
+        return pos;    // 扫描到头（名字之前没有空格），返回 0
+    }
+
     inline const char* splitFuncName(const char* func_sig, const char* func_name)
     {
         thread_local std::unordered_map<const char*, std::string> func_name_map;
@@ -1524,24 +1570,31 @@ namespace _priv
         if (it != func_name_map.end())
             return it->second.c_str();
         if (strcmp(func_sig, func_name) == 0)
-            return func_name;
+        {
+            func_name_map[func_sig] = func_name;
+            return func_name_map[func_sig].c_str();
+        }
 
         std::string s_func_sig = func_sig;
-        size_t name_pos = s_func_sig.find(func_name + std::string("("));
+        std::string s_func_name = func_name;
+        size_t name_pos = s_func_sig.find(s_func_name + std::string("("));
         if (name_pos == std::string::npos)
         {
-            name_pos = s_func_sig.find(func_name + std::string("<"));
-            // 处理gcc上lambda函数
+            name_pos = s_func_sig.find(s_func_name + std::string("<"));
+            // sig和name未重叠的函数，退化为name
             if (name_pos == std::string::npos)
             {
-                s_func_sig.append("::").append(func_name);
-                func_name_map[func_sig] = std::move(s_func_sig);
+                func_name_map[func_sig] = std::move(s_func_name);
                 return func_name_map[func_sig].c_str();
             }
         }
-        s_func_sig.erase(name_pos + strlen(func_name));
-        s_func_sig.erase(0, s_func_sig.rfind(' ', name_pos - 1) + 1);
-        func_name_map[func_sig] = std::move(s_func_sig);
+
+        const size_t name_end = name_pos + strlen(func_name);
+        size_t name_start = skipQualifiedNamePrefix(s_func_sig, name_pos);    // 限定名之前第一个括号外空格之后（<…> 与 (…) 配对之外）
+        name_start = s_func_sig.find_first_not_of("()[]&*", name_start);      // 继续跳过返回类型残留符号（& * ( [ ] 等），定位名字开头
+        if (name_start == std::string::npos)
+            name_start = name_pos;
+        func_name_map[func_sig] = s_func_sig.substr(name_start, name_end - name_start);
         return func_name_map[func_sig].c_str();
     }
 
