@@ -7,6 +7,118 @@
 #include "bokumeido/core/base.hpp"
 
 using namespace meido;
+
+// ========== MEIDO_FUNCNAME 拆分正确性测试：被测类型与函数 ==========
+// 定义在全局命名空间（贴近真实使用场景）；期望值对 GCC/Clang/MSVC 一致
+//（MSVC 的 "operator <<" 空格形式由 splitFuncName 归一为 operator<<）
+const char* g_captured_name = nullptr;    // 记录最近一次 MEIDO_FUNCNAME 的取值
+
+struct FuncNameProbeStruct
+{
+    int memValue(int)
+    {
+        g_captured_name = MEIDO_FUNCNAME;
+        return 0;
+    }
+    const double& memConstRef() const
+    {
+        static double v = 0;
+        g_captured_name = MEIDO_FUNCNAME;
+        return v;
+    }
+    static int* memStaticPtr()
+    {
+        g_captured_name = MEIDO_FUNCNAME;
+        return nullptr;
+    }
+    int& operator<<(int)
+    {
+        static int v = 0;
+        g_captured_name = MEIDO_FUNCNAME;
+        return v;
+    }
+    void operator()(int)
+    { g_captured_name = MEIDO_FUNCNAME; }
+    bool operator<(const FuncNameProbeStruct&) const
+    {
+        g_captured_name = MEIDO_FUNCNAME;
+        return false;
+    }
+    operator bool() const
+    {
+        g_captured_name = MEIDO_FUNCNAME;
+        return true;
+    }
+};
+
+inline const char* probeFreeValue(int)
+{ return MEIDO_FUNCNAME; }
+inline const std::vector<int>& probeFreeConstRef()
+{
+    static std::vector<int> v;
+    g_captured_name = MEIDO_FUNCNAME;
+    return v;
+}
+
+inline int probeOverloaded(int)
+{
+    g_captured_name = MEIDO_FUNCNAME;
+    return 0;
+}
+inline int probeOverloaded(int, int)
+{
+    g_captured_name = MEIDO_FUNCNAME;
+    return 0;
+}
+
+template <class T>
+inline const T& probeTmplConstRef(const T& v)
+{
+    g_captured_name = MEIDO_FUNCNAME;
+    return v;
+}
+
+// ---- 扩展场景 probe：函数指针返回 / 命名空间内类 / 多参数模板类 / 嵌套模板类 ----
+inline void (*probeFnPtr())(int)
+{
+    g_captured_name = MEIDO_FUNCNAME;
+    return nullptr;
+}
+
+namespace meidoFnProbeNs
+{
+struct NsProbe
+{
+    int& getRef()
+    {
+        static int v = 0;
+        g_captured_name = MEIDO_FUNCNAME;
+        return v;
+    }
+};
+}    // namespace meidoFnProbeNs
+
+template <class T, class U>
+struct TmplMultiProbe
+{
+    U pick(T& t)
+    {
+        g_captured_name = MEIDO_FUNCNAME;
+        return t;
+    }
+};
+
+template <class T>
+struct NestProbe
+{
+    T& get()
+    {
+        g_captured_name = MEIDO_FUNCNAME;
+        return val_;
+    }
+    T val_{};
+};
+
 namespace _meidobasecheck
 {
 
@@ -43,9 +155,9 @@ inline void getVersionTest()
 inline void logVersionTest()
 {
     // 调用 logVersion，验证不同入参均不崩溃
-    base::logVersion();                 // 无 project_name
-    base::logVersion("bokumeido_unit_test"); // 有 project_name
-    base::logVersion(nullptr);          // nullptr
+    base::logVersion();                         // 无 project_name
+    base::logVersion("bokumeido_unit_test");    // 有 project_name
+    base::logVersion(nullptr);                  // nullptr
 }
 
 inline void funcSigTest()
@@ -67,20 +179,178 @@ inline void funcSigTest()
     _MEIDO_INFO_RAW(funcname_buf);
 }
 
+// ========== MEIDO_FUNCNAME 拆分正确性测试 ==========
+// 覆盖返回类型为值/模板引用/函数指针、成员限定、运算符重载、重载函数、模板函数/类、命名空间限定、lambda 等场景，
+// 各场景按解析代码路径互补去重：&/*/(&/(* 剥离走同一 find_first_not_of 路径，仅保留代表性用例
+// 注意：无限定名的纯函数名用例在实现整体退化时也能通过（退化返回 __func__ 恰好等于期望），
+// 解析真实性由成员/模板类/命名空间/lambda 等带限定名用例兜底
+
+// lambda 名称兼容断言：GCC 的 sig 不含 operator() 走退化路径返回 "operator()"；
+// Clang 为 foo(...)::(anonymous class)::operator()；MSVC 为 `foo'::<lambda_N>::operator ()
+// 只校验去空格后以 operator() 结尾：外层函数参数表（如 (int &)）是编译器限定名的合法部分，
+// 不能检查不含 '&'；返回类型符号残留的回归保护由各精确 strcmp 用例承担
+inline void checkLambdaName(const char* n)
+{
+    std::string n_nospace = n;
+    n_nospace.erase(std::remove(n_nospace.begin(), n_nospace.end(), ' '), n_nospace.end());
+    MEIDO_ASSERT(n_nospace.size() >= strlen("operator()")
+                 && n_nospace.compare(n_nospace.size() - strlen("operator()"), strlen("operator()"), "operator()") == 0);
+}
+
+// lambda 外层函数带多参数/引用/复杂类型参数时，函数参数表 (int, int) / (const std::string&) 内含空格，
+// 解析不得被这些空格提前截断
+inline void meidoFuncNameMultiArgOuter(int a, int b)
+{
+    auto multi_lambda = [](int x, int y) { g_captured_name = MEIDO_FUNCNAME; (void)x; (void)y; };
+    multi_lambda(a, b);
+}
+
+inline void meidoFuncNameComplexOuter(int& a, int b, const std::string& s)
+{
+    (void)a;
+    (void)b;
+    (void)s;
+    auto complex_lambda = []() { g_captured_name = MEIDO_FUNCNAME; };
+    complex_lambda();
+}
+
+inline void meidoFuncNameTest()
+{
+    // ---- 自由函数：值 / 常量引用（模板返回类型 + &）返回 ----
+    MEIDO_ASSERT(strcmp(probeFreeValue(1), "probeFreeValue") == 0);
+    probeFreeConstRef();
+    MEIDO_ASSERT(strcmp(g_captured_name, "probeFreeConstRef") == 0);
+
+    // ---- 成员函数：const 限定 + 引用返回 / 静态 + 指针返回 ----
+    FuncNameProbeStruct ms;
+    ms.memValue(1);
+    MEIDO_ASSERT(strcmp(g_captured_name, "FuncNameProbeStruct::memValue") == 0);
+    ms.memConstRef();
+    MEIDO_ASSERT(strcmp(g_captured_name, "FuncNameProbeStruct::memConstRef") == 0);
+    FuncNameProbeStruct::memStaticPtr();
+    MEIDO_ASSERT(strcmp(g_captured_name, "FuncNameProbeStruct::memStaticPtr") == 0);
+
+    // ---- 运算符重载：名字按编译器原样保留（MSVC 的 __func__ 为 "operator <<" 带空格，GCC/Clang 为 "operator<<"）----
+    // 不统一格式，只验证拆分正确（不含返回类型符号、限定名完整）
+#if defined(__clang_cl__)
+    // clang-cl（依据 clang 源码推断）：__FUNCSIG__ 的函数名部分用 clang 的 printQualifiedName 打印（无空格），
+    // 与 __func__（clang 前端，无空格）一致，find 命中走正常解析；仍需 clang-cl 实测确认
+    const char* ms_op_shift = "FuncNameProbeStruct::operator<<";
+    const char* ms_op_call = "FuncNameProbeStruct::operator()";
+#elif defined(_MEIDO_MSVC_LIKE)
+    const char* ms_op_shift = "FuncNameProbeStruct::operator <<";
+    const char* ms_op_call = "FuncNameProbeStruct::operator ()";
+#else
+    const char* ms_op_shift = "FuncNameProbeStruct::operator<<";
+    const char* ms_op_call = "FuncNameProbeStruct::operator()";
+#endif
+    ms << 3;
+    MEIDO_ASSERT(strcmp(g_captured_name, ms_op_shift) == 0);
+    ms(7);
+    MEIDO_ASSERT(strcmp(g_captured_name, ms_op_call) == 0);
+    bool b = ms;
+    (void)b;
+    MEIDO_ASSERT(strcmp(g_captured_name, "FuncNameProbeStruct::operator bool") == 0);    // 转换运算符名字中的空格合法
+
+    // ---- 重载函数（不同签名解析出同名）----
+    probeOverloaded(1, 2);
+    MEIDO_ASSERT(strcmp(g_captured_name, "probeOverloaded") == 0);
+
+    // ---- 模板函数（const T& 返回）----
+    std::string s;
+    probeTmplConstRef(s);
+    MEIDO_ASSERT(strcmp(g_captured_name, "probeTmplConstRef") == 0);
+
+    // ---- 函数指针返回：名字前的 '(*' 需被跳过 ----
+    probeFnPtr();
+    MEIDO_ASSERT(strcmp(g_captured_name, "probeFnPtr") == 0);
+
+    // ---- 命名空间内类成员：限定名含 命名空间::类名:: ----
+    meidoFnProbeNs::NsProbe ns_probe;
+    ns_probe.getRef();
+    MEIDO_ASSERT(strcmp(g_captured_name, "meidoFnProbeNs::NsProbe::getRef") == 0);
+
+    // ---- 多参数模板类 + 引用模板实参（MSVC 会展开 std::string 为长类型串）：限定名含 <…, …&> ----
+    std::string multi_s;
+    TmplMultiProbe<std::string, std::string&> multi_probe;
+    multi_probe.pick(multi_s);
+    {
+        const std::string& n = g_captured_name;
+        MEIDO_ASSERT(n.compare(0, strlen("TmplMultiProbe<"), "TmplMultiProbe<") == 0);    // 类名+模板参数完整位于名字开头
+        MEIDO_ASSERT(n.size() > strlen("::pick") && n.compare(n.size() - strlen("::pick"), strlen("::pick"), "::pick") == 0);
+    }
+
+    // ---- 嵌套模板类限定名（>> 连续闭合）：S<std::vector<int>>::get ----
+    NestProbe<std::vector<int>> nest_probe;
+    nest_probe.get();
+    {
+        const std::string& n = g_captured_name;
+        MEIDO_ASSERT(n.compare(0, strlen("NestProbe<"), "NestProbe<") == 0);
+        MEIDO_ASSERT(n.size() > strlen("::get") && n.compare(n.size() - strlen("::get"), strlen("::get"), "::get") == 0);
+    }
+
+    // ---- operator<（名字内孤立的 '<' 不能误判为模板参数起始）----
+    ms < ms;
+#if defined(__clang_cl__)
+    MEIDO_ASSERT(strcmp(g_captured_name, "FuncNameProbeStruct::operator<") == 0);    // 同 clang-cl 运算符块注释
+#elif defined(_MEIDO_MSVC_LIKE)
+    MEIDO_ASSERT(strcmp(g_captured_name, "FuncNameProbeStruct::operator <") == 0);
+#else
+    MEIDO_ASSERT(strcmp(g_captured_name, "FuncNameProbeStruct::operator<") == 0);
+#endif
+
+    // ---- lambda：GCC sig 不含 operator() 走退化路径；Clang/MSVC 完整解析，做兼容断言 ----
+    int a = 5;
+    auto probe_lambda = []() { g_captured_name = MEIDO_FUNCNAME; };
+    probe_lambda();
+    checkLambdaName(g_captured_name);
+
+    // ---- lambda 外层函数带多参数/引用/复杂类型参数：限定名中函数参数表含空格，不得提前截断 ----
+    meidoFuncNameMultiArgOuter(a, 2);
+    checkLambdaName(g_captured_name);
+#if defined(__clang__) && !defined(_MEIDO_MSVC_LIKE)
+    // Clang 可完整解析 lambda 限定名：必须包含外层函数名（截断 bug 会从参数表处截掉函数名）
+    MEIDO_ASSERT(strstr(g_captured_name, "meidoFuncNameMultiArgOuter") != nullptr);
+    MEIDO_ASSERT(strstr(g_captured_name, "(anonymous class)::operator()") != nullptr);
+#elif defined(_MEIDO_MSVC_LIKE) && !defined(__clang__)
+    // 纯 MSVC 实测形态：outerFunc::<lambda_hash>::operator ()，无参数表
+    MEIDO_ASSERT(strstr(g_captured_name, "meidoFuncNameMultiArgOuter") != nullptr);
+    MEIDO_ASSERT(strstr(g_captured_name, "<lambda_") != nullptr);
+    MEIDO_ASSERT(strstr(g_captured_name, "::operator ()") != nullptr);
+#endif
+    meidoFuncNameComplexOuter(a, 2, s);
+    checkLambdaName(g_captured_name);
+#if defined(__clang__) && !defined(_MEIDO_MSVC_LIKE)
+    MEIDO_ASSERT(strstr(g_captured_name, "meidoFuncNameComplexOuter") != nullptr);
+    MEIDO_ASSERT(strstr(g_captured_name, "(anonymous class)::operator()") != nullptr);
+#elif defined(_MEIDO_MSVC_LIKE) && !defined(__clang__)
+    MEIDO_ASSERT(strstr(g_captured_name, "meidoFuncNameComplexOuter") != nullptr);
+    MEIDO_ASSERT(strstr(g_captured_name, "<lambda_") != nullptr);
+    MEIDO_ASSERT(strstr(g_captured_name, "::operator ()") != nullptr);
+#endif
+}
+
 // ========== makeScopeGuard 编译期约束测试（SFINAE 辅助 trait） ==========
 // C++11 兼容的 void_t 实现
 template <typename...>
-struct ScopeGuardVoidImpl { using type = void; };
+struct ScopeGuardVoidImpl
+{
+    using type = void;
+};
 template <typename... Ts>
 using ScopeGuardVoidT = typename ScopeGuardVoidImpl<Ts...>::type;
 
 // SFINAE trait：检测 makeScopeGuard 是否对类型 T 可用
 // 注意：引用类型作为参数传入时会被按值传递 decay，因此 makeScopeGuard 对引用类型实际上可用
 template <typename T, typename = void>
-struct is_make_scope_guardable : std::false_type {};
+struct is_make_scope_guardable : std::false_type
+{
+};
 
 template <typename T>
-struct is_make_scope_guardable<T, ScopeGuardVoidT<decltype(base::makeScopeGuard(std::declval<T>()))>> : std::true_type {};
+struct is_make_scope_guardable<T, ScopeGuardVoidT<decltype(base::makeScopeGuard(std::declval<T>()))>> : std::true_type
+{
+};
 
 // 不可移动构造的可调用类型（测试 makeScopeGuard 的移动构造约束）
 struct NonMoveCallable
@@ -99,7 +369,10 @@ inline void msg_func_set_one() {}
 struct MakeScopeGuardFuncObj
 {
     int* counter;
-    void operator()() { if (counter) ++(*counter); }
+    void operator()()
+    {
+        if (counter) ++(*counter);
+    }
 };
 
 // 运行时测试辅助——带 LIFO 顺序的函数对象
@@ -107,7 +380,10 @@ struct MakeScopeGuardOrderObj
 {
     int* val;
     int digit;
-    void operator()() { if (val) *val = *val * 10 + digit; }
+    void operator()()
+    {
+        if (val) *val = *val * 10 + digit;
+    }
 };
 
 inline void makeScopeGuardStaticAssertTest()
@@ -120,7 +396,7 @@ inline void makeScopeGuardStaticAssertTest()
                   "lambda should be makeScopeGuardable");
 
     // 函数指针类型
-    static_assert(is_make_scope_guardable<void(*)()>::value,
+    static_assert(is_make_scope_guardable<void (*)()>::value,
                   "function pointer should be makeScopeGuardable");
 
     // 可移动构造的函数对象
@@ -132,7 +408,7 @@ inline void makeScopeGuardStaticAssertTest()
                   "movable functor should be makeScopeGuardable");
 
     // 函数引用类型（按值传递 decay 为函数指针，因此可用）
-    static_assert(is_make_scope_guardable<void(&)()>::value,
+    static_assert(is_make_scope_guardable<void (&)()>::value,
                   "function reference decays to pointer, should be makeScopeGuardable");
 
     // ---- 负面测试：期望 makeScopeGuard 对以下类型不可用 ----
@@ -201,17 +477,17 @@ inline void makeScopeGuardControlTest()
     {
         auto guard = base::makeScopeGuard([&] { val = 42; });
         guard.reset();
-        MEIDO_ASSERT(val == 42);        // reset 时立即执行
-        val = 0;                        // 重置以验证析构时不会再次执行
+        MEIDO_ASSERT(val == 42);    // reset 时立即执行
+        val = 0;                    // 重置以验证析构时不会再次执行
     }
-    MEIDO_ASSERT(val == 0);              // 析构时未重复执行
+    MEIDO_ASSERT(val == 0);    // 析构时未重复执行
 
     // ---- 3. 重复 dismiss 安全 ----
     int c3 = 0;
     {
         auto guard = base::makeScopeGuard(MakeScopeGuardFuncObj{&c3});
         guard.dismiss();
-        guard.dismiss();                // 第二次 dismiss 应无影响
+        guard.dismiss();    // 第二次 dismiss 应无影响
     }
     MEIDO_ASSERT(c3 == 0);
 
@@ -219,19 +495,19 @@ inline void makeScopeGuardControlTest()
     int c4 = 0;
     {
         auto guard = base::makeScopeGuard(MakeScopeGuardFuncObj{&c4});
-        guard.reset();                  // 提前执行，count++
-        guard.dismiss();                // 已无效，再 dismiss 无影响
+        guard.reset();      // 提前执行，count++
+        guard.dismiss();    // 已无效，再 dismiss 无影响
     }
-    MEIDO_ASSERT(c4 == 1);               // 仅 reset 时执行一次
+    MEIDO_ASSERT(c4 == 1);    // 仅 reset 时执行一次
 
     // ---- 5. 已 dismiss 后再 reset 无效果 ----
     int c5 = 0;
     {
         auto guard = base::makeScopeGuard(MakeScopeGuardFuncObj{&c5});
-        guard.dismiss();                // 取消
-        guard.reset();                  // 已取消，reset 不应执行
+        guard.dismiss();    // 取消
+        guard.reset();      // 已取消，reset 不应执行
     }
-    MEIDO_ASSERT(c5 == 0);               // 从未执行
+    MEIDO_ASSERT(c5 == 0);    // 从未执行
 }
 
 inline void makeScopeGuardMoveTest()
@@ -250,8 +526,7 @@ inline void makeScopeGuardMoveTest()
         std::unique_ptr<int> data;
         int* flag;
 
-        MoveOnlyCallable(std::unique_ptr<int> d, int* f)
-            : data(std::move(d)), flag(f) {}
+        MoveOnlyCallable(std::unique_ptr<int> d, int* f) : data(std::move(d)), flag(f) {}
         MoveOnlyCallable(MoveOnlyCallable&&) = default;
         MoveOnlyCallable(const MoveOnlyCallable&) = delete;
 
@@ -288,6 +563,7 @@ inline void check()
 
     // ---- 2. 编译器宏诊断 ----
     funcSigTest();
+    meidoFuncNameTest();
 
     // ---- 3. makeScopeGuard 编译期约束测试 ----
     makeScopeGuardStaticAssertTest();
