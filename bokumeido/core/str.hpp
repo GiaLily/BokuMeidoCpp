@@ -179,11 +179,14 @@ namespace _priv
     class StringOutBuf : public std::streambuf
     {
     public:
-        std::string& str() { return str_; }
-        const std::string& str() const { return str_; }
+        std::string& str()
+        { return str_; }
+        const std::string& str() const
+        { return str_; }
 
         // 清空内容但保留容量，配合thread_local复用避免重复分配
-        void clear() { str_.clear(); }
+        void clear()
+        { str_.clear(); }
 
     protected:
         virtual int_type overflow(int_type c) override

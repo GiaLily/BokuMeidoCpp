@@ -27,7 +27,8 @@ namespace ds
     public:
         // 构造一个容量为0的空对象
         template <class U = T, typename std::enable_if<std::is_same<U, T>::value && _priv::CircularQueueElemChecker<U>::value, int>::type = 0>
-        CircularQueue() {}
+        CircularQueue()
+        {}
 
         /*  构造循环队列；模板参数仅用于类型检查，不可修改
             @param queue_capacity: 循环队列的容量，为0时入队出队都无效  */
