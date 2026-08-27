@@ -42,6 +42,31 @@ inline void printTest()
     io::print("              io::print single int:   Actual|", 42);
 }
 
+// StringOutBuf::overflow 的 eof 分支：eof 视为刷新请求，不写入字符
+// 辅助类：暴露 protected overflow 以直接做 streambuf 协议测试
+class StringOutBufEofProbe : public _priv::StringOutBuf
+{
+public:
+    int_type probeOverflow(int_type c)
+    { return this->overflow(c); }
+};
+
+inline void stringOutBufEofTest()
+{
+    using traits_type = std::streambuf::traits_type;
+    StringOutBufEofProbe buf;
+
+    // eof 输入应返回成功（非 eof），且不向 str_ 写入任何字节
+    auto ret = buf.probeOverflow(traits_type::eof());
+    MEIDO_ASSERT(buf.str().empty());
+    MEIDO_ASSERT(!traits_type::eq_int_type(ret, traits_type::eof()));
+
+    // 正常字符不受 eof 分支影响
+    buf.probeOverflow('A');
+    buf.probeOverflow('B');
+    MEIDO_ASSERT(buf.str() == "AB");
+}
+
 inline void parseArgsTest()
 {
     std::vector<char*> argv_vec;
@@ -211,6 +236,9 @@ inline void check()
 
     // ---- 1. 容器输出 (io::print) ----
     printTest();
+
+    // ---- 1.1 StringOutBuf eof 分支 ----
+    stringOutBufEofTest();
 
     // ---- 2. 命令行参数解析 (ArgumentParser) ----
     parseArgsTest();
