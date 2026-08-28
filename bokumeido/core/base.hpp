@@ -813,16 +813,14 @@ namespace _priv
     {
         thread_local std::unordered_map<const char*, std::string> cache;
         auto it = cache.find(filename);
-        if (it != cache.end())
+        if (it == cache.end())
         {
-            memcpy(buf, it->second.c_str(), it->second.size());
-            return it->second.size();
+            std::string only_filename = normPath(filename);
+            only_filename = only_filename.substr(only_filename.rfind('/') + 1);
+            it = cache.emplace(filename, std::move(only_filename)).first;
         }
-        std::string only_filename = normPath(filename);
-        only_filename = only_filename.substr(only_filename.rfind('/') + 1);
-        auto it2 = cache.emplace(filename, std::move(only_filename)).first;
-        memcpy(buf, it2->second.c_str(), it2->second.size());
-        return it2->second.size();
+        memcpy(buf, it->second.c_str(), it->second.size());
+        return it->second.size();
     }
 
     inline size_t lineToBuf(int v, char* buf)
@@ -849,17 +847,14 @@ namespace _priv
     {
         thread_local std::unordered_map<std::thread::id, std::string> cache;
         auto it = cache.find(id);
-        if (it != cache.end())
+        if (it == cache.end())
         {
-            memcpy(buf, it->second.c_str(), it->second.size());
-            return it->second.size();
+            std::ostringstream oss;
+            oss << id;
+            it = cache.emplace(id, oss.str()).first;
         }
-
-        std::ostringstream oss;
-        oss << id;
-        auto it2 = cache.emplace(id, oss.str()).first;
-        memcpy(buf, it2->second.c_str(), it2->second.size());
-        return it2->second.size();
+        memcpy(buf, it->second.c_str(), it->second.size());
+        return it->second.size();
     }
 
     // 将日志头+消息拼入 buf, 返回总字节数; buf 需 >= 4096
@@ -1571,8 +1566,8 @@ namespace _priv
             return it->second.c_str();
         if (strcmp(func_sig, func_name) == 0)
         {
-            func_name_map[func_sig] = func_name;
-            return func_name_map[func_sig].c_str();
+            it = func_name_map.emplace(func_sig, func_name).first;
+            return it->second.c_str();
         }
 
         std::string s_func_sig = func_sig;
@@ -1584,8 +1579,8 @@ namespace _priv
             // sig和name未重叠的函数，退化为name
             if (name_pos == std::string::npos)
             {
-                func_name_map[func_sig] = std::move(s_func_name);
-                return func_name_map[func_sig].c_str();
+                it = func_name_map.emplace(func_sig, func_name).first;
+                return it->second.c_str();
             }
         }
 
@@ -1594,8 +1589,9 @@ namespace _priv
         name_start = s_func_sig.find_first_not_of("()[]&*", name_start);      // 继续跳过返回类型残留符号（& * ( [ ] 等），定位名字开头
         if (name_start == std::string::npos)
             name_start = name_pos;
-        func_name_map[func_sig] = s_func_sig.substr(name_start, name_end - name_start);
-        return func_name_map[func_sig].c_str();
+        it = func_name_map.emplace(func_sig, s_func_sig.substr(name_start, name_end - name_start)).first;
+
+        return it->second.c_str();
     }
 
 
