@@ -109,9 +109,7 @@ namespace mem
         {
             std::lock_guard<std::mutex> lk(mtx_);
             if (free_list_.empty())
-            {
                 return nullptr;
-            }
             idx = free_list_.back();
             free_list_.pop_back();
         }

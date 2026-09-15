@@ -550,7 +550,7 @@ namespace _priv
                 return -1;
             }
 
-            auto funcEscape = [](const std::string& s) {
+            auto func_escape = [](const std::string& s) {
                 std::string out;
                 out.reserve(s.size());
                 for (char c : s)
@@ -566,7 +566,7 @@ namespace _priv
             };
             for (auto& info : log_queue_)
             {
-                log_map_file << funcEscape(info.log_path) << "##" << info.create_tp_sec << "##" << info.active << std::endl;
+                log_map_file << func_escape(info.log_path) << "##" << info.create_tp_sec << "##" << info.active << std::endl;
             }
             log_map_file.close();
             fsyncByPath(log_map_path_tmp_);
@@ -627,7 +627,7 @@ namespace _priv
             else
                 remove(log_map_path_bak_.c_str());
 
-            auto funcUnEscape = [](const std::string& s) {
+            auto func_unescape = [](const std::string& s) {
                 std::string out;
                 out.reserve(s.size());
                 for (size_t i = 0; i < s.size(); ++i)
@@ -660,7 +660,7 @@ namespace _priv
                     printf("[WARN][%s:%d] Invalid log map line %s, skip.\n", __FILE__, __LINE__, line.c_str());
                     continue;
                 }
-                info.log_path = funcUnEscape(line.substr(0, path_end_pos));
+                info.log_path = func_unescape(line.substr(0, path_end_pos));
 
                 size_t time_end_pos = line.find("##", path_end_pos + 2);    // 最后一位+1
                 if (time_end_pos == std::string::npos || line.size() != time_end_pos + 3)
