@@ -13,6 +13,10 @@
 #include <thread>
 #include <vector>
 
+#if defined(_MSC_VER)
+#include <intrin.h>    // _mm_pause / __yield
+#endif
+
 #include "base.hpp"
 #include "log.hpp"
 #include "type.hpp"
@@ -57,7 +61,7 @@ namespace thrd
         SpinLock& operator=(const SpinLock& tmp_lock) = delete;
 
     private:
-        std::atomic_flag lock_flag_ = ATOMIC_FLAG_INIT;
+        std::atomic<int32_t> locked_ = {0};
     };
 
     /*  无优先级的读写锁，线程安全
@@ -209,6 +213,30 @@ namespace thrd
 
 /*--------------------------------------------内部实现--------------------------------------------*/
 
+namespace _priv
+{
+    /*  平台自旋提示指令，让出执行资源并降低功耗
+        与 std::this_thread::yield() 不同，它不进入调度器，只消耗几十个周期；
+        未知平台退化为空操作，不影响正确性  */
+    inline void cpuRelax() noexcept
+    {
+#if defined(_MEIDO_MSVC_LIKE)
+#if defined(_M_IX86) || defined(_M_X64)
+        _mm_pause();
+#elif defined(_M_ARM) || defined(_M_ARM64)
+        __yield();
+#endif
+#elif defined(_MEIDO_GCC_LIKE)
+#if defined(__i386__) || defined(__x86_64__)
+        __builtin_ia32_pause();
+#elif defined(__arm__) || defined(__aarch64__)
+        __asm__ __volatile__("yield");
+#endif
+#endif
+    }
+}    // namespace _priv
+
+
 namespace thrd
 {
     /* --------------------------------- SpinLock 实现 -------------------------------- */
@@ -239,26 +267,39 @@ namespace thrd
 
     inline void SpinLock::lock()
     {
-        int spin_count = 0;
-        while (lock_flag_.test_and_set(std::memory_order_acquire))
+        // 指数退避，算法出自 Intel 优化手册
+        int backoff = 1;
+        int ceiling_rounds = 0;
+
+        for (;;)
         {
-            ++spin_count;
-            if (spin_count >= 1000)
+            if (!locked_.exchange(1, std::memory_order_acquire))
+                return;
+
+            while (locked_.load(std::memory_order_relaxed))
             {
-                std::this_thread::yield();    // 自旋次数过多，让出CPU
-                spin_count = 0;
+                for (int i = 0; i < backoff; ++i)
+                    _priv::cpuRelax();
+
+                if (backoff < 64)
+                    backoff <<= 1;
+                else if (++ceiling_rounds >= 1024)
+                {
+                    std::this_thread::yield();
+                    ceiling_rounds = 0;
+                }
             }
         }
     }
 
     inline void SpinLock::unlock()
     {
-        lock_flag_.clear(std::memory_order_release);
+        locked_.store(0, std::memory_order_release);
     }
 
     inline bool SpinLock::tryLock()
     {
-        return !lock_flag_.test_and_set(std::memory_order_acquire);
+        return !locked_.exchange(1, std::memory_order_acquire);
     }
 
     inline base::ScopeGuard<SpinLock::Unlock> SpinLock::lockScope()
