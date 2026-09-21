@@ -152,7 +152,6 @@ namespace mem
     template <class T>
     inline size_t ObjectPool<T>::capacity() const
     {
-        std::lock_guard<std::mutex> lk(mtx_);
         return slots_.size();
     }
 
