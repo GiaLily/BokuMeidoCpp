@@ -6,7 +6,7 @@
 
 > format, print, log, thread pool — **Meido** keeps your daily dev tools in the apron.
 
-`v1.0.0` • `C++11` • `Header-Only` • `Cross-Platform` • `Zero Dependencies`
+`v1.0.2` • `C++11` • `Header-Only` • `Cross-Platform` • `Zero Dependencies`
 
 [![CI](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml/badge.svg)](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml)
 
@@ -391,8 +391,8 @@ void func(T val) {
 
 | Item | Info |
 |:-----|:------|
-| **Version** | `1.0.0` |
-| **Last Updated** | `2026-08-21` |
+| **Version** | `1.0.2` |
+| **Last Updated** | `2026-09-24` |
 
 ---
 
@@ -415,6 +415,14 @@ void func(T val) {
 ---
 
 ## Changelog
+
+### v1.0.2
+*2026-09-24*
+1. Fixed `MEIDO_FUNCNAME` parsing for certain complex type names (template arguments, return-type symbols, etc.);
+2. `SpinLock` now uses exponential backoff plus platform spin-hint instructions (`_mm_pause` / `yield`), reducing wasted spinning and scheduling overhead under contention;
+3. Removed redundant locking in `ObjectPool::capacity()` and optimized lookup-table paths in the `base` module;
+4. Fixed code that produced "unused" warnings, plus other non-standard constructs;
+5. Added more unit test cases for the `base` and `io` modules.
 
 ### v1.0.1
 *2026-08-21*

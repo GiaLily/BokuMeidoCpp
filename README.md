@@ -6,7 +6,7 @@
 
 > format、print、log、线程池……**Meido**替您携带日常开发的小工具
 
-`v1.0.0` • `C++11` • `Header-Only` • `跨平台` • `零依赖`
+`v1.0.2` • `C++11` • `Header-Only` • `跨平台` • `零依赖`
 
 [![CI](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml/badge.svg)](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml)
 
@@ -400,8 +400,8 @@ meido::io::print(42, 3.14, "hello", vec, mp);
 
 | 项目 | 信息 |
 |:-----|:------|
-| **当前版本** | `1.0.0` |
-| **文档更新** | `2026-08-21` |
+| **当前版本** | `1.0.2` |
+| **文档更新** | `2026-09-24` |
 
 ---
 
@@ -424,6 +424,14 @@ meido::io::print(42, 3.14, "hello", vec, mp);
 ---
 
 ## 版本更新日志
+
+### v1.0.2
+*2026-09-24*
+1. 修复 `MEIDO_FUNCNAME` 对部分复杂类型名（模板参数、返回类型符号等）的解析错误；
+2. `SpinLock` 改用指数退避 + 平台自旋提示指令（`_mm_pause` / `yield`），减少高竞争下的无效自旋与调度开销；
+3. 移除 `ObjectPool::capacity()` 中多余的加锁，并优化 `base` 模块中涉及查表的实现；
+4. 修正部分导致「未使用」类警告的代码及其他不规范写法；
+5. 补充 `base`、`io` 模块的单元测试例。
 
 ### v1.0.1
 *2026-08-21*
