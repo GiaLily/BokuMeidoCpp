@@ -27,4 +27,5 @@ void anotherTest()
     MyStruct s ;    // 假设有个没适配 operator<< 的自定义类型
 
     meido::io::print(nums, kv, nested, 3.14, s);
+    MEIDO_INFO("anotherTest out\n");
 }
