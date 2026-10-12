@@ -66,6 +66,8 @@ BraceWrapping:
   SplitEmptyRecord: true
   # 分离空命名空间
   SplitEmptyNamespace: true
+  # lambda函数换行
+  BeforeLambdaBody: true
 
 # 在二元操作符前换行策略：None/NonAssignment/All
 BreakBeforeBinaryOperators: NonAssignment

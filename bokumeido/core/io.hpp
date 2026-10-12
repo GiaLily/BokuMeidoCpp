@@ -453,13 +453,15 @@ namespace io
 
     inline bool ArgumentParser::checkPresetsAreValid(const std::vector<BooleanOption>& boolopts_preset, const std::vector<ValueOption>& valueopts_preset) const
     {
-        auto func_shortflag_check = [](const std::string& flag) {
+        auto func_shortflag_check = [](const std::string& flag)
+        {
             if (flag.size() != 2 || flag[0] != '-' || !isalpha(flag[1]))
                 return false;
             return true;
         };
 
-        auto func_longflag_check = [](const std::string& flag) {
+        auto func_longflag_check = [](const std::string& flag)
+        {
             if (flag.size() < 4 || flag[0] != '-' || flag[1] != '-' || !isalpha(flag[2]))
                 return false;
             for (size_t i = 3; i < flag.size(); ++i)

@@ -7,6 +7,7 @@ vendor/*
 
 # ---- 本地 MCP 服务 ----
 mcp-servers/*
+.mcp.json
 
 # ---- 编辑器 / 本地工具 ----
 .vscode/*
@@ -51,7 +52,5 @@ a.out
 Thumbs.db
 .tmp/*
 
-# ---- 个人文件（不参与版本控制） ----
-/房租合同-预览版.pdf
-/飞腾学习/
-/自由&正义001(CUnet)(noise)(Level3).png
+
+

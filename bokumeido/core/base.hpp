@@ -48,10 +48,10 @@
 #endif
 
 
-#define BOKUMEIDOCPP_MAJOR "1"                                                                                                                 // 主版本号，对应不向下兼容的API或文件改动
-#define BOKUMEIDOCPP_MINOR "0"                                                                                                                 // 次版本号，对应不影响现有API使用的新功能增加
-#define BOKUMEIDOCPP_PATCH "2"                                                                                                                 // 修订版本号，对应不改变API的BUG修复或效能优化
-#define BOKUMEIDOCPP_DATE "2026-09-24"                                                                                                         // 日期版本号，对应文档和注释级别的改动和测试阶段
+#define BOKUMEIDOCPP_MAJOR "1"                                                                                         // 主版本号，对应不向下兼容的API或文件改动
+#define BOKUMEIDOCPP_MINOR "0"                                                                                         // 次版本号，对应不影响现有API使用的新功能增加
+#define BOKUMEIDOCPP_PATCH "2"                                                                                         // 修订版本号，对应不改变API的BUG修复或效能优化
+#define BOKUMEIDOCPP_DATE "dev"                                                                                 // 日期版本号，对应文档和注释级别的改动和测试阶段
 #define BOKUMEIDOCPP_VERSION BOKUMEIDOCPP_MAJOR "." BOKUMEIDOCPP_MINOR "." BOKUMEIDOCPP_PATCH "-" BOKUMEIDOCPP_DATE    // 完整版本字符串
 
 
@@ -550,7 +550,8 @@ namespace _priv
                 return -1;
             }
 
-            auto func_escape = [](const std::string& s) {
+            auto func_escape = [](const std::string& s)
+            {
                 std::string out;
                 out.reserve(s.size());
                 for (char c : s)
@@ -627,7 +628,8 @@ namespace _priv
             else
                 remove(log_map_path_bak_.c_str());
 
-            auto func_unescape = [](const std::string& s) {
+            auto func_unescape = [](const std::string& s)
+            {
                 std::string out;
                 out.reserve(s.size());
                 for (size_t i = 0; i < s.size(); ++i)

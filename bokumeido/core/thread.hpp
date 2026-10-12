@@ -533,7 +533,8 @@ namespace thrd
         work_thrds_.resize(pool_size);
         for (uint32_t i = 0; i < pool_size; ++i)
         {
-            work_thrds_[i] = std::thread(&ThreadPool::worker, this, [i, thread_init_func] { if (thread_init_func) thread_init_func(i); });
+            work_thrds_[i] = std::thread(&ThreadPool::worker, this, [i, thread_init_func]
+                                         { if (thread_init_func) thread_init_func(i); });
         }
     }
 
@@ -562,7 +563,8 @@ namespace thrd
         state.future_state_ = task->get_future();
         {
             std::lock_guard<std::mutex> lk(task_mtx_);
-            task_queue_.emplace([task]() { (*task)(); });
+            task_queue_.emplace([task]()
+                                { (*task)(); });
         }
         cond_var_.notify_one();
         return state;
