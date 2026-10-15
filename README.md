@@ -111,7 +111,7 @@ cl /std:c++14 /EHsc /O2 main.cpp              # MSVC
 
 | 文件 | 来源 | 作者 |
 |:----|:-----|:----|
-| `3rdparty/dragonbox.hpp` | [Dragonbox](https://github.com/jk-jeon/dragonbox) | Junekey Jeon |
+| `_detail/dragonbox.hpp` | [Dragonbox](https://github.com/jk-jeon/dragonbox) | Junekey Jeon |
 
 
 ### 使用方法
@@ -171,6 +171,7 @@ cl /std:c++14 /EHsc /O2 main.cpp              # MSVC
 | **性能优化** | 在达成设计意图且不增加接口复杂度的前提下，尽可能优化性能 |
 | **线程安全** | 所有函数接口保证线程安全；类接口非明确说明不保证线程安全 |
 | **异常规避** | 避免主动抛出异常，除非是资源限制等情况导致的被动异常 |
+| **宏隔离** | 头文件主动隔离外部项目与系统头的粗暴宏（如 windef.h 的 min/max），本库不被污染，外部项目行为也不被改变 |
 
 ### 命名规则
 

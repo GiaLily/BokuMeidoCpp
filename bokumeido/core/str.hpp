@@ -3,6 +3,8 @@
 #ifndef STR_HPP_BOKUMEIDOCPP
 #define STR_HPP_BOKUMEIDOCPP
 
+#include "../_detail/macro_hide.hpp"
+
 #include <algorithm>
 #include <array>
 #include <initializer_list>
@@ -25,7 +27,7 @@
 
 #include "base.hpp"
 #include "type.hpp"
-#include "../3rdparty/dragonbox.hpp"
+#include "../_detail/dragonbox.hpp"
 
 
 namespace meido
@@ -1063,4 +1065,5 @@ namespace str
 }    // namespace str
 }    // namespace meido
 
+#include "../_detail/macro_restore.hpp"
 #endif    // !STR_HPP_BOKUMEIDOCPP

@@ -3,6 +3,8 @@
 #ifndef MATH_HPP_BOKUMEIDOCPP
 #define MATH_HPP_BOKUMEIDOCPP
 
+#include "../_detail/macro_hide.hpp"
+
 #include <algorithm>
 #include <array>
 #include <iostream>
@@ -326,4 +328,5 @@ namespace math
 }    // namespace math
 }    // namespace meido
 
+#include "../_detail/macro_restore.hpp"
 #endif    // !MATH_HPP_BOKUMEIDOCPP

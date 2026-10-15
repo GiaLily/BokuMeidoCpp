@@ -109,7 +109,7 @@ cl /std:c++14 /EHsc /O2 main.cpp              # MSVC
 
 | File | Source | Author |
 |:-----|:-------|:-------|
-| `3rdparty/dragonbox.hpp` | [Dragonbox](https://github.com/jk-jeon/dragonbox) | Junekey Jeon |
+| `_detail/dragonbox.hpp` | [Dragonbox](https://github.com/jk-jeon/dragonbox) | Junekey Jeon |
 
 
 ### Usage
@@ -168,6 +168,7 @@ Rough conclusions from simple test scenarios — for reference only. Actual perf
 | **Performance-Oriented** | Optimized wherever possible without complicating the API |
 | **Thread-Safe** | All free functions are thread-safe; member functions are thread-safe only where documented |
 | **Exception-Averse** | Avoids throwing exceptions except for resource exhaustion |
+| **Macro-Isolated** | Headers isolate crude macros from the host project and system headers (e.g. `min`/`max` in windef.h): the library stays unaffected, and the host project's own macros are left intact |
 
 ### Naming Conventions
 

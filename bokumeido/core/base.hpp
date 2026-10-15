@@ -3,6 +3,8 @@
 #ifndef BASE_HPP_BOKUMEIDOCPP
 #define BASE_HPP_BOKUMEIDOCPP
 
+#include "../_detail/macro_hide.hpp"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -28,18 +30,6 @@
 #include <direct.h>
 #include <io.h>
 #include <sys/stat.h>
-// windows.h 会引入 wingdi.h 的 ERROR(=0)、windef.h 的 min/max 等粗暴宏，污染用户 TU
-// 本库不依赖 GDI/OLE/Shell，此处收紧 windows.h 的引入范围，既避开宏污染也加快编译
-#ifndef WIN32_LEAN_AND_MEAN
-#define WIN32_LEAN_AND_MEAN    // 剔除图形、OLE、Shell 等不常用组件
-#endif
-#ifndef NOMINMAX
-#define NOMINMAX    // 禁止 windows.h 定义 min/max 宏
-#endif
-#ifndef NOGDI
-#define NOGDI    // 禁止引入 GDI 头（含 ERROR 宏的定义）
-#endif
-#include <windows.h>
 #else
 #include <dirent.h>
 #include <fcntl.h>
@@ -416,65 +406,42 @@ namespace _priv
 
     inline bool fsyncByPath(const std::string& path)
     {
-#if defined(_MEIDO_WIN32)
-        HANDLE h = ::CreateFileA(
-            path.c_str(),
-            GENERIC_WRITE,
-            FILE_SHARE_READ | FILE_SHARE_WRITE,
-            nullptr,
-            OPEN_EXISTING,    // ✅ 修正
-            FILE_ATTRIBUTE_NORMAL,
-            nullptr);
-
-        if (h == INVALID_HANDLE_VALUE)
-        {
-            DWORD err = ::GetLastError();
-            return (err == ERROR_FILE_NOT_FOUND);
-        }
-
-        BOOL ok = ::FlushFileBuffers(h);
-        ::CloseHandle(h);
-
-        return ok != FALSE;
-#else
         FILE* fp = fopen(path.c_str(), "rb+");
         if (!fp)
             return false;
 
+#if defined(_MEIDO_WIN32)
+        int fd = ::_fileno(fp);
+#else
         int fd = ::fileno(fp);
+#endif
         if (fd == -1)
         {
             fclose(fp);
             return false;
         }
 
+#if defined(_MEIDO_WIN32)
+        bool ok = (::_commit(fd) == 0);
+#else
         bool ok = (::fsync(fd) == 0);
+#endif
         fclose(fp);
         return ok;
-#endif
     }
 
     inline size_t getFileSize(const std::string& path)
     {
 #if defined(_MEIDO_WIN32)
-        WIN32_FILE_ATTRIBUTE_DATA attr;
-        if (!::GetFileAttributesExA(
-                path.c_str(),
-                GetFileExInfoStandard,
-                &attr))
+        struct _stat64 st;
+        if (::_stat64(path.c_str(), &st) != 0)
             return 0;
-
-        ULARGE_INTEGER ul;
-        ul.LowPart = attr.nFileSizeLow;
-        ul.HighPart = attr.nFileSizeHigh;
-        return ul.QuadPart;
-
 #else
         struct stat st;
         if (::stat(path.c_str(), &st) != 0)
             return 0;
-        return static_cast<size_t>(st.st_size);
 #endif
+        return static_cast<size_t>(st.st_size);
     }
 
     class LogMap
@@ -1700,4 +1667,5 @@ namespace base
 }    // namespace base
 }    // namespace meido
 
+#include "../_detail/macro_restore.hpp"
 #endif    // !BASE_HPP_BOKUMEIDOCPP

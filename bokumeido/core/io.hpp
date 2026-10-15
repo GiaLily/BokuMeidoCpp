@@ -19,8 +19,10 @@
 #include <stdio.h>
 
 #include "base.hpp"
+#include "log.hpp"
 #include "str.hpp"
 #include "type.hpp"
+
 
 
 namespace meido

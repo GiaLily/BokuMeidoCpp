@@ -3,6 +3,8 @@
 #ifndef TIME_HPP_BOKUMEIDOCPP
 #define TIME_HPP_BOKUMEIDOCPP
 
+#include "../_detail/macro_hide.hpp"
+
 #include <chrono>
 #include <functional>
 #include <iostream>
@@ -968,4 +970,5 @@ namespace time
 }    // namespace time
 }    // namespace meido
 
+#include "../_detail/macro_restore.hpp"
 #endif    // !TIME_HPP_BOKUMEIDOCPP
