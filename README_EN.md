@@ -6,7 +6,7 @@
 
 > format, print, log, thread pool — **Meido** keeps your daily dev tools in the apron.
 
-`v1.0.2` • `C++11` • `Header-Only` • `Cross-Platform` • `Zero Dependencies`
+`v1.0.3` • `C++11` • `Header-Only` • `Cross-Platform` • `Zero Dependencies`
 
 [![CI](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml/badge.svg)](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml)
 
@@ -392,8 +392,8 @@ void func(T val) {
 
 | Item | Info |
 |:-----|:------|
-| **Version** | `1.0.2` |
-| **Last Updated** | `2026-09-24` |
+| **Version** | `1.0.3` |
+| **Last Updated** | `2026-10-20` |
 
 ---
 
@@ -416,6 +416,13 @@ void func(T val) {
 ---
 
 ## Changelog
+
+### v1.0.3
+*2026-10-20*
+1. Added header-level macro isolation: some modules save and undefine the `min`/`max` macros on entry and restore them on exit, so the library is unaffected by host macros and leaves the host's macro state intact;
+2. The Windows implementation no longer depends on `windows.h`: file sync and size queries now use CRT APIs (`_commit`, `_stat64`), reducing system-header inclusion and macro pollution while speeding up compilation;
+3. Renamed the internal implementation directory from `3rdparty/` to `_detail/` to clarify the internal-file boundary;
+4. Fixed `io.hpp` missing its `log.hpp` dependency, which made standalone inclusion depend on include order.
 
 ### v1.0.2
 *2026-09-24*

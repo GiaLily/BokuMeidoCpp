@@ -6,7 +6,7 @@
 
 > format、print、log、线程池……**Meido**替您携带日常开发的小工具
 
-`v1.0.2` • `C++11` • `Header-Only` • `跨平台` • `零依赖`
+`v1.0.3` • `C++11` • `Header-Only` • `跨平台` • `零依赖`
 
 [![CI](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml/badge.svg)](https://github.com/GiaLily/BokuMeidoCpp/actions/workflows/ci.yml)
 
@@ -401,8 +401,8 @@ meido::io::print(42, 3.14, "hello", vec, mp);
 
 | 项目 | 信息 |
 |:-----|:------|
-| **当前版本** | `1.0.2` |
-| **文档更新** | `2026-09-24` |
+| **当前版本** | `1.0.3` |
+| **文档更新** | `2026-10-20` |
 
 ---
 
@@ -425,6 +425,13 @@ meido::io::print(42, 3.14, "hello", vec, mp);
 ---
 
 ## 版本更新日志
+
+### v1.0.3
+*2026-10-20*
+1. 新增头文件宏隔离：部分模块在入口暂存并取消 `min`/`max` 宏、出口恢复，本库不受外部宏污染，也不改变外部项目的宏状态；
+2. Windows 实现不再依赖 `windows.h`，文件同步与大小获取改用 `_commit`、`_stat64` 等 CRT 接口，减少系统头引入与宏污染，同时加快编译；
+3. 内部实现目录由 `3rdparty/` 更名为 `_detail/`，明确内部文件边界；
+4. 修复单独包含 `io.hpp` 时缺少 `log.hpp` 依赖、编译结果受包含顺序影响的问题。
 
 ### v1.0.2
 *2026-09-24*
